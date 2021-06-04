@@ -3,6 +3,7 @@ const i2c = require('i2c-bus');
 const Redis = require('redis');
 
 const redis = Redis.createClient();
+require('bluebird').promisifyAll(redis);
 
 i2c.openPromisified(1).then(async (bus) => {
   const ads1115 = await ADS1115(bus)
@@ -15,6 +16,7 @@ i2c.openPromisified(1).then(async (bus) => {
     const remaining = ((voltage/Sn)/vMax)*100; // Cantidad de energia restante, al disminuir del minimo deberia mandar la señal de aterrizaje y recarga
     console.log('Bateria %s - Capacidad %s%%', voltage.toFixed(3), remaining.toFixed(1));
     redis.hmsetAsync('battery', 'voltage', voltage, 'remaining', remaining);
+    redis.publishAsync('battery:m', JSON.stringify({voltage, remaining}));
   }
 
   setInterval(()=>checkBattery(), 1000);
