@@ -3,7 +3,7 @@ const Pca9685Driver = require("pca9685").Pca9685Driver;
 const fs = require('fs'), { O_RDWR } = fs.constants;
 
 //const MIN = 0.17, MAX=0.48, ZERO = 0.13, FULL = 0.5;
-const MIN = 1000, STOP = MIN - 100, MAX = 2400; 
+const MIN = 1000, STOP = MIN - 100, MAX = 2300; 
 
 const pausa = async (tout=1000) => new Promise(resolve=>setTimeout(()=>resolve(), tout));
 
@@ -34,18 +34,23 @@ const pwm = new Pca9685Driver(opt, async (err) => {
     return;*/
 
     // Para programar el rango. Correr este script y luego enseguida enchufar la bateria a los ESC
-     chn.forEach(c => pwm.setPulseLength(c, MAX)); // envia MAX (2.5ms)
-     await pausa(7000);
-     chn.forEach(c => pwm.setPulseLength(c, STOP)); // envia MIN (0.5ms)
+    /*
+    console.log('Configuring ESC ranges');
+    chn.forEach(c => pwm.setPulseLength(c, MAX*2)); // envia MAX (2.5ms)
+    await pausa(5000);
+    chn.forEach(c => pwm.setPulseLength(c, MAX)); // envia MAX (2.5ms)
+    await pausa(5000);
+    chn.forEach(c => pwm.setPulseLength(c, STOP)); // envia MIN (0.5ms)
       
-//     return
+    console.log('Motors armed');
     await pausa(10000);
+    */
     console.log('Inicializando al minimo');
     chn.forEach(c => pwm.setPulseLength(c, MIN)); // 500 - 2500
     await pausa(10000);
-//    console.log('Subiendo al maximo');
-//     chn.forEach(c => pwm.setPulseLength(c, MAX)); // 500 - 2500
-//     await pausa(10000);
+    console.log('Subiendo al maximo');
+    chn.forEach(c => pwm.setPulseLength(c, MAX)); // 500 - 2500
+    await pausa(2000);
     console.log('Llevando a cero');
     chn.forEach(c => pwm.setPulseLength(c, STOP)); // 500 - 2500
     
