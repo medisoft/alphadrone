@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "ads1115": "^1.2.0",
+    "i2c-mpu6050": "^2.3.0",
     "pca9685": "^5.0.0",
     "pca9685-promise": "^1.1.1",
     "raspi": "^6.0.1",
