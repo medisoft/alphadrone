@@ -18,7 +18,7 @@ i2c.openPromisified(1).then(async (bus) => {
     const voltage=(await ads1115.measure('0+GND'))*0.1875*3/1000; // El 3 es por el divisor de voltaje de 1/3, y el 0.1875 es por datasheet, para voltajes maximos de 6.144v
     if(vMax*Sn<voltage) Sn++;
     //const remaining = ((voltage/Sn)/vMax)*100; // Cantidad de energia restante, al disminuir del minimo deberia mandar la señal de aterrizaje y recarga
-    const remaining = (vMax-voltage/Sn)/(vMax-vMin)*100;
+    const remaining = (voltage/Sn-vMin)/(vMax-vMin)*100;
     console.log('Bateria %sS %sv (%sv x celda - %sv minimo) - Capacidad %s%%', Sn, voltage.toFixed(3), (voltage/Sn).toFixed(3), vMin.toFixed(3), remaining.toFixed(1));
     redis.hmsetAsync('battery', 'voltage', voltage, 'remaining', remaining);
     redis.publishAsync('battery:m', JSON.stringify({voltage, remaining}));
