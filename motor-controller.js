@@ -35,6 +35,7 @@ const armAll = async (pwm) => {
     await pausa(1000);
 }
 
+let step=0, currentSpeed=STOP, tini;
 
 // D = PW/T, T=1/f, PW = D*T = D/f
 const pwm = new Pca9685Driver(opt, async (err) => {
@@ -43,18 +44,53 @@ const pwm = new Pca9685Driver(opt, async (err) => {
     if(!fs.existsSync('/tmp/armed.tmp')) {
         await armAll(pwm);
         fs.closeSync(fs.openSync('/tmp/armed.tmp', 'w'));
+    } else {
+        chn.forEach(c => pwm.setPulseLength(c, STOP)); // 500 - 2500
     }
     
     console.log('Starting motor controller');
     
     subscriber.on('message', (channel, message)=>{
-        if(channel==='orientation:m') {
+        if(channel==='orientation:m' &&false) {
             const {gyro, accel, rotation, temp}=JSON.parse(message);
-            console.log('G X: %s Y: %s Z: %s', gyro.x.toFixed(4), gyro.y.toFixed(4), gyro.z.toFixed(4))
+            console.log('G x: %s y: %s z: %s A x: %s y: %s z: %s'
+                , gyro.x.toFixed(4), gyro.y.toFixed(4), gyro.z.toFixed(4)
+                , accel.x.toFixed(4), accel.y.toFixed(4), accel.z.toFixed(4)
+            );
+        }
+        if(channel==='distance:floor:m') {
+            const {floor}=JSON.parse(message);
+            console.log('H %scm', floor.toFixed(0));
+            if(currentSpeed>MAX || currentSpeed<STOP || step!==3 && new Date().getTime()-tini>10000) {
+                console.log('Paro total por que algo fallo');
+                chn.forEach(c => pwm.setPulseLength(c, STOP));      
+                step=0;
+            } else if(step===0) {
+                if(floor<10) {
+                    console.log('Incrementando potencia: %s', currentSpeed);
+                    chn.forEach(c => pwm.setPulseLength(c, currentSpeed));    
+                    currentSpeed*=1.01;
+                } else step=1;
+            } else if(step===1) {
+                if(floor>3) {
+                    console.log('Reduciendo potencia: %s', currentSpeed);
+                    chn.forEach(c => pwm.setPulseLength(c, currentSpeed));                
+                    currentSpeed*=0.99;
+                } else step=2;
+            } else if(step===2) {
+                console.log('Paro total');
+                chn.forEach(c => pwm.setPulseLength(c, STOP));      
+                step=3;
+            }
         }
     });
-    subscriber.subscribe('orientation:m');
+//     subscriber.subscribe('orientation:m');
+    subscriber.subscribe('distance:floor:m');
+    tini=new Date().getTime();
     
+//     pwm.setPulseLength(3, MIN);
+//     await pausa(10000);
+
     //chn.forEach(c => pwm.setPulseLength(c, STOP)); // 500 - 2500
 /*//     return ;
     for(let i =0.10 ;i<0.45;i+=0.05) {
