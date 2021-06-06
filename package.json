@@ -14,6 +14,7 @@
     "nodemon": "^2.0.7",
     "pca9685": "^5.0.0",
     "pca9685-promise": "^1.1.1",
+    "pigpio-client": "^1.5.1",
     "raspi": "^6.0.1",
     "raspi-gpio": "^6.2.2",
     "raspi-i2c": "^6.2.4",

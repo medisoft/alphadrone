@@ -1,6 +1,11 @@
 const I2CBus = require('i2c-bus');
 const Pca9685Driver = require("pca9685").Pca9685Driver;
 const fs = require('fs'), { O_RDWR } = fs.constants;
+const Redis = require('redis');
+
+
+const redis = Redis.createClient(), subscriber=redis.duplicate();
+require('bluebird').promisifyAll(redis);
 
 //const MIN = 0.17, MAX=0.48, ZERO = 0.13, FULL = 0.5;
 const MIN = 1000, STOP = MIN - 100, MAX = 2300; 
@@ -41,6 +46,15 @@ const pwm = new Pca9685Driver(opt, async (err) => {
     }
     
     console.log('Starting motor controller');
+    
+    subscriber.on('message', (channel, message)=>{
+        if(channel==='orientation:m') {
+            const {gyro, accel, rotation, temp}=JSON.parse(message);
+            console.log('G X: %s Y: %s Z: %s', gyro.x.toFixed(4), gyro.y.toFixed(4), gyro.z.toFixed(4))
+        }
+    });
+    subscriber.subscribe('orientation:m');
+    
     //chn.forEach(c => pwm.setPulseLength(c, STOP)); // 500 - 2500
 /*//     return ;
     for(let i =0.10 ;i<0.45;i+=0.05) {
